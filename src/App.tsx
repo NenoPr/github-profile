@@ -177,29 +177,27 @@ function App() {
               </div>
 
               <div className="header-tab">
-                <div className="p-5 text-base">Followers</div>
+                <div className="p-5 ">Followers</div>
 
                 <div className="header-separator"></div>
 
-                <div className="p-5 text-base">{user.followers}</div>
+                <div className="p-5">{user.followers}</div>
               </div>
 
               <div className="header-tab">
-                <div className="p-5 text-base">Following</div>
+                <div className="p-5 ">Following</div>
 
                 <div className="header-separator"></div>
 
-                <div className="p-5 text-base">{user.following}</div>
+                <div className="p-5 ">{user.following}</div>
               </div>
 
               <div className="header-tab">
-                <div className="p-5 text-base">Location</div>
+                <div className="p-5 ">Location</div>
 
                 <div className="header-separator"></div>
 
-                <div className="p-5 text-base">
-                  {user.location ?? "Unknown"}
-                </div>
+                <div className="p-5 ">{user.location ?? "Unknown"}</div>
               </div>
             </div>
 
