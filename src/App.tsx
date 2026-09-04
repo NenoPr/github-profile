@@ -33,7 +33,7 @@ function App() {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [previewUser, setPreviewUser] = useState<userPreview | null>(null);
   const [query, setQuery] = useState("GitHub");
-  const [reposPreview, setReposPreview] = useState(null);
+  const [reposPreview, setReposPreview] = useState(false);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -126,6 +126,7 @@ function App() {
     if (event.key === "Enter") {
       handleSearch();
       setPreviewUser(null);
+      setQuery("");
     }
   };
 
