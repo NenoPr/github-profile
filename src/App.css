@@ -60,6 +60,34 @@ input {
   padding-right: 10rem;
 }
 
+.search-user-container {
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+  border-radius: 1rem;
+  background-color: #111729;
+}
+
+.user-search-card {
+  display: flex;
+  gap: 1rem;
+  text-align: left;
+  align-content: center;
+}
+
+.user-search-info {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+}
+
+.image-header-preview {
+  width: 100px;
+  margin: 1rem;
+  border-radius: 0.5rem;
+}
+
 .header-tabs {
   display: flex;
   flex-direction: row;
@@ -108,8 +136,8 @@ input {
 
 .cards-container {
   display: flex;
-  flex-direction:;
-  gap: 3rem;
+  flex-direction: row;
+  gap: 1rem;
   justify-content: space-between;
   margin-bottom: 2rem;
   flex-wrap: wrap;
@@ -119,7 +147,7 @@ input {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 35vw;
+  width: 39vw;
   height: 225px;
   padding: 1rem;
   border-radius: 1rem;

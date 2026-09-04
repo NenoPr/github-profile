@@ -1,38 +1,120 @@
 import { useState, useEffect } from "react";
+import type { GitHubUser } from "./types/types";
+
+import SearchIcon from "./assets/Search.svg";
+import ShieldIcon from "./assets/Chield_alt.svg";
+import NestingIcon from "./assets/Nesting.svg";
+import StarIcon from "./assets/Star.svg";
+
 import "./App.css";
 
+type GitHubRepo = {
+  id: number;
+  name: string;
+  description: string | null;
+  clone_url: string;
+  forks: number;
+  stargazers_count: number;
+  license: {
+    key: string;
+  } | null;
+};
+
+type userPreview = {
+  id: number;
+  login: string;
+  avatar_url: string;
+  name: string | null;
+  bio: string | null;
+};
+
 function App() {
-  const [user, setUser] = useState({ default: "Default" });
-  const [repos, setRepos] = useState({ default: "Default" });
+  const [user, setUser] = useState<GitHubUser | null>(null);
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [previewUser, setPreviewUser] = useState<userPreview | null>(null);
   const [query, setQuery] = useState("GitHub");
-  const [reposPreview, setReposPreview] = useState(true);
+  const [reposPreview, setReposPreview] = useState(null);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setPreviewUser(null);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      handleUserSearch(query);
+    }, 800);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [query]);
 
   const handleSearch = () => {
     getUser();
   };
 
-  const getUser = () => {
-    fetch(`https://api.github.com/users/${encodeURIComponent(query)}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setUser(data);
-        getRepos(data.name);
+  const handleUserSearch = (value: string) => {
+    fetch(`https://api.github.com/users/${encodeURIComponent(value)}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("User not found");
+        }
+
+        return response.json();
+      })
+      .then((data: userPreview) => {
+        setPreviewUser(data);
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
+        setPreviewUser(null);
       });
   };
 
-  const getRepos = (name) => {
-    fetch(`https://api.github.com/users/${encodeURIComponent(name)}/repos`)
-      .then((response) => response.json())
-      .then((data) => {
+  const getUser = () => {
+    fetch(`https://api.github.com/users/${encodeURIComponent(query)}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("User not found");
+        }
+
+        return response.json();
+      })
+      .then((data: GitHubUser) => {
         console.log(data);
-        setRepos(data);
+
+        setUser(data);
+
+        // GitHub repo URL requires username/login,
+        // not the person's display name.
+        getRepos(data.login);
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
+
+        setUser(null);
+        setRepos([]);
+      });
+  };
+
+  const getRepos = (name: string) => {
+    fetch(`https://api.github.com/users/${encodeURIComponent(name)}/repos`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Could not load repositories");
+        }
+
+        return response.json();
+      })
+      .then((data: GitHubRepo[]) => {
+        console.log(data);
+        setRepos(data);
+        setPreviewUser(null);
+      })
+      .catch((error) => {
+        console.error(error);
+        setRepos([]);
       });
   };
 
@@ -40,168 +122,145 @@ function App() {
     handleSearch();
   }, []);
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      console.log("Enter pressed");
       handleSearch();
+      setPreviewUser(null);
     }
   };
+
+  const displayedRepos = reposPreview ? repos.slice(0, 4) : repos;
 
   return (
     <>
       <div className="background">
         <div className="search-contanier">
-          <img src="../src/assets/Search.svg" alt="" />
+          <img src={SearchIcon} alt="Search" />
+
           <input
             type="text"
+            value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
-        {/* <div className="flex flex-row gap-3 search-info">
-          <img
-            src={user.avatar_url ? user.avatar_url : ""}
-            className="image-avatar"
-            alt=""
-          />
-          <div className="flex flex-col align-center justify-items-center justify-center text-left gap-1">
-            <div>
-              <strong className="text-white">{user.name}</strong>
+        {previewUser && (
+          <div className="search-user-container">
+            <div className="user-search-card">
+              <img
+                src={previewUser.avatar_url}
+                alt=""
+                className="image-header-preview"
+              />
+              <div className="user-search-info">
+                <div className="text-2xl">
+                  <strong>{previewUser.name}</strong>
+                </div>
+                <div>{previewUser.bio}</div>
+              </div>
             </div>
-            <div>{user.bio ? user.bio : ""}</div>
           </div>
-        </div> */}
+        )}
       </div>
+
       <div className="main-container">
-        <div className="header-tabs">
-          <div className="header-tab-image">
-            <img
-              src={user.avatar_url ? user.avatar_url : ""}
-              alt=""
-              className="image-header"
-            />
-          </div>
-          <div className="header-tab">
-            <div className="p-5 text-base">Followers</div>
-            <div className="header-separator"></div>
-            <div className="p-5 text-base">
-              {user.followers ? user.followers : "NaN"}
+        {user ? (
+          <>
+            <div className="header-tabs">
+              <div className="header-tab-image">
+                <img
+                  src={user.avatar_url}
+                  alt={user.login}
+                  className="image-header"
+                />
+              </div>
+
+              <div className="header-tab">
+                <div className="p-5 text-base">Followers</div>
+
+                <div className="header-separator"></div>
+
+                <div className="p-5 text-base">{user.followers}</div>
+              </div>
+
+              <div className="header-tab">
+                <div className="p-5 text-base">Following</div>
+
+                <div className="header-separator"></div>
+
+                <div className="p-5 text-base">{user.following}</div>
+              </div>
+
+              <div className="header-tab">
+                <div className="p-5 text-base">Location</div>
+
+                <div className="header-separator"></div>
+
+                <div className="p-5 text-base">
+                  {user.location ?? "Unknown"}
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="header-tab">
-            <div className="p-5 text-base">Following</div>
-            <div className="header-separator"></div>
-            <div className="p-5 text-base">
-              {user.following ? user.following : "NaN"}
+
+            <div className="middle-text">
+              <h1>{user.name ?? user.login}</h1>
+              <h3>{user.bio ?? ""}</h3>
             </div>
+          </>
+        ) : (
+          <div className="mt-3">
+            <strong>Nothing here yet...</strong>
           </div>
-          <div className="header-tab">
-            <div className="p-5 text-base">Location</div>
-            <div className="header-separator"></div>
-            <div className="p-5 text-base">
-              {user.location ? user.location : "NaN"}
-            </div>
-          </div>
-        </div>
-        <div className="middle-text">
-          <h1 className="">{user.name}</h1>
-          <h3>{user.bio}</h3>
-        </div>
+        )}
+
         <div className="cards-container">
-          {Array.isArray(repos)
-            ? reposPreview === true
-              ? repos.slice(0, 4).map((repo) => (
-                  <div
-                    className="card"
-                    key={repo.id}
-                    onClick={() => window.open(repo.clone_url, "_blank")}
-                  >
-                    <div className="card-info">
-                      <p>
-                        <strong className="text-2xl">{repo.name}</strong>
-                      </p>
-                      <p>{repo.description}</p>
-                    </div>
-                    <div className="card-icons">
-                      {repo.license ? (
-                        <div className="card-icons-info">
-                          <img
-                            src={`../src/assets/Chield_alt.svg`}
-                            alt=""
-                            className="w-10"
-                          />
-                          <p>{repo.license.key.toUpperCase()}</p>
-                        </div>
-                      ) : (
-                        ""
-                      )}
-                      <div className="card-icons-info">
-                        <img
-                          src={`../src/assets/Nesting.svg`}
-                          alt=""
-                          className="w-10"
-                        />
-                        <p>{repo.forks}</p>
-                      </div>
-                      <div className="card-icons-info">
-                        <img
-                          src={`../src/assets/Star.svg`}
-                          alt=""
-                          className="w-10"
-                        />
-                        <p>{repo.stargazers_count}</p>
-                      </div>
-                    </div>
+          {displayedRepos.map((repo) => (
+            <div
+              className="card"
+              key={repo.id}
+              onClick={() => window.open(repo.clone_url, "_blank")}
+            >
+              <div className="card-info">
+                <p>
+                  <strong className="text-2xl">{repo.name}</strong>
+                </p>
+
+                <p>{repo.description}</p>
+              </div>
+
+              <div className="card-icons">
+                {repo.license && (
+                  <div className="card-icons-info">
+                    <img src={ShieldIcon} alt="License" className="w-10" />
+
+                    <p>{repo.license.key.toUpperCase()}</p>
                   </div>
-                ))
-              : repos.map((repo) => (
-                  <div className="card" key={repo.id}>
-                    <div className="card-info">
-                      <p>
-                        <strong className="text-2xl">{repo.name}</strong>
-                      </p>
-                      <p>{repo.description}</p>
-                    </div>
-                    <div className="card-icons">
-                      {repo.license ? (
-                        <div className="card-icons-info">
-                          <img
-                            src={`../src/assets/Chield_alt.svg`}
-                            alt=""
-                            className="w-10"
-                          />
-                          <p>{repo.license.key.toUpperCase()}</p>
-                        </div>
-                      ) : (
-                        ""
-                      )}
-                      <div className="card-icons-info">
-                        <img
-                          src={`../src/assets/Nesting.svg`}
-                          alt=""
-                          className="w-10"
-                        />
-                        <p>{repo.forks}</p>
-                      </div>
-                      <div className="card-icons-info">
-                        <img
-                          src={`../src/assets/Star.svg`}
-                          alt=""
-                          className="w-10"
-                        />
-                        <p>{repo.stargazers_count}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-            : ""}
+                )}
+
+                <div className="card-icons-info">
+                  <img src={NestingIcon} alt="Forks" className="w-10" />
+
+                  <p>{repo.forks}</p>
+                </div>
+
+                <div className="card-icons-info">
+                  <img src={StarIcon} alt="Stars" className="w-10" />
+
+                  <p>{repo.stargazers_count}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div
-          onClick={() => setReposPreview(!reposPreview)}
-          className="view-repositories"
-        >
-          {reposPreview ? "View all repositories" : "Show less"}
-        </div>
+
+        {repos.length > 4 && (
+          <div
+            onClick={() => setReposPreview((previous) => !previous)}
+            className="view-repositories"
+          >
+            {reposPreview ? "View all repositories" : "Show less"}
+          </div>
+        )}
       </div>
     </>
   );
