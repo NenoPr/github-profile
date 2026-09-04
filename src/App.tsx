@@ -33,7 +33,7 @@ function App() {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [previewUser, setPreviewUser] = useState<userPreview | null>(null);
   const [query, setQuery] = useState("GitHub");
-  const [reposPreview, setReposPreview] = useState(false);
+  const [reposPreview, setReposPreview] = useState(true);
 
   useEffect(() => {
     if (!query.trim()) {
